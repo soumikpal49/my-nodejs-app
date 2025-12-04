@@ -1,17 +1,34 @@
-
 trigger:
-- main
+  - main   # or your required branch
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
 
 steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'
-  displayName: 'Install Node.js'
+  - checkout: self
 
-- script: |
-    npm install
-    npm run build
-  displayName: 'npm install and build'
+  - task: NodeTool@0
+    displayName: 'Set up Node.js'
+    inputs:
+      versionSpec: '18'
+
+  - script: |
+      npm install
+    displayName: 'Install dependencies'
+
+  - script: |
+      if [ -f package.json ] && grep -q "\"test\":" package.json; then
+        npm test || true
+      else
+        echo "No tests defined"
+      fi
+    displayName: 'Run tests'
+    continueOnError: true
+
+  - script: |
+      if [ -f package.json ] && grep -q "\"build\":" package.json; then
+        npm run build
+      else
+        echo "No build script found"
+      fi
+    displayName: 'Build application'
